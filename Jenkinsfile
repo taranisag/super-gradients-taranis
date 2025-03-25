@@ -1,3 +1,3 @@
 @Library("taranis-jenkins-library")_
 
-deployPythonPackage("super-gradients-taranis", null);
+pipelineBuildAndPushPythonPackage(packageName: "super-gradients-taranis");
