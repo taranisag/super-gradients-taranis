@@ -13,6 +13,7 @@ REQ_PRO_LOCATION = "requirements.pro.txt"
 VERSION_FILE = "version.txt"
 INIT_FILE = "src/super_gradients/__init__.py"
 
+PACKAGE_NAME = 'super-gradients-taranis'
 
 def readme():
     """print long description"""
@@ -31,22 +32,46 @@ def get_pro_requirements():
         return f.read().splitlines()
 
 
-def get_version():
-    with open(VERSION_FILE, encoding="utf-8") as f:
-        ver = f.readline()
+def _version(package_name):
+    fname = f"version.txt"
+    with open(fname, 'r') as f:
+        ver_str = f.read()
 
-    if ver.startswith("for"):
-        with open(INIT_FILE, encoding="utf-8") as f:
-            for line in f.readlines():
-                if line.startswith("__version__"):
-                    ver = line.split()[-1].strip('"') + "+master"
 
-    return ver
+    if all(env_var in os.environ for env_var in ['AGROBRAIN_COMMON_CONFIGURATION', 'BRANCH_NAME', 'BUILD_NUMBER']):
+        ver_str = _get_version_from_server(package_name, ver_str)
+        with open(fname, 'w') as f:
+            f.write(ver_str)
+
+    return ver_str
+
+
+def _get_version_from_server(package_name, ver_str):
+    import requests
+    url = f"{os.environ['AGROBRAIN_COMMON_CONFIGURATION']}/deploy_tools/packages/get_next_version"
+    major = int(ver_str.split('.')[0])
+    minor = int(ver_str.split('.')[1])
+
+    params = {"package_name": package_name,
+              "branch_name": os.environ['BRANCH_NAME'],
+              "build_number": os.environ['BUILD_NUMBER'],
+              "major": major,
+              "minor": minor}
+    headers = {'accept': 'application/json'}
+
+    response = requests.get(url, params=params, headers=headers, timeout=30)
+
+    if response.status_code != 200:
+        raise RuntimeError(
+            f"Failed to get next version from packages manager. Status code: {response.status_code}. Response: {response.text}")
+
+    print(f"Got next version: {response.json()}")
+    return response.json()
 
 
 setup(
-    name="super-gradients",
-    version=get_version(),
+    name=PACKAGE_NAME,
+    version=_version(PACKAGE_NAME),
     description="SuperGradients",
     author="Deci AI",
     author_email="rnd@deci.ai",
