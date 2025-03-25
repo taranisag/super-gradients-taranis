@@ -1,4 +1,6 @@
-FROM us-central1-docker.pkg.dev/taranis-api/base-images/ubuntu20.04-python3.8-datascience
+FROM python:3.10
+
+RUN pip install requests
 
 RUN mkdir -p /app
 WORKDIR /app
