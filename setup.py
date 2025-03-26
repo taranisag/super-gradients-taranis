@@ -34,7 +34,7 @@ def get_pro_requirements():
 
 
 def _version(package_name):
-    fname = f"version.txt"
+    fname = f"src/version.py"
     with open(fname, 'r') as f:
         ver_str = f.read()
 
